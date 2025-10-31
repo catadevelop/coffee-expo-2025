@@ -1,0 +1,15 @@
+{
+    "非洲": {
+        "pic" : "./pic/africa.jpg"
+    },
+    "南美洲": {
+        "pic" : "./pic/south_america.jpg"
+    },
+    "亞洲": {
+        "pic" : "./pic/asia.jpg"
+    },
+    "中美洲": {
+        "pic" : "./pic/central_america.jpg"
+    }
+}
+    

@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>咖啡對對碰遊戲 - Coffee Expo 2025</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #8B4513, #D2691E);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .container {
+            max-width: 400px;
+            width: 100%;
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* 開始畫面 */
+        .start-screen {
+            display: block;
+        }
+
+        .game-screen,
+        .result-screen {
+            display: none;
+        }
+
+        .start-screen h1 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            line-height: 1.3;
+        }
+
+        .start-screen p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .start-btn {
+            background: #FF8C00;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        /* 遊戲畫面 */
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            aspect-ratio: 1;
+            background: #8B4513;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            border: 2px solid #654321;
+        }
+
+        .card.flipped {
+            background: #F5DEB3;
+            color: #8B4513;
+        }
+
+        .card.matched {
+            background: #90EE90;
+            color: #228B22;
+            cursor: default;
+            animation: matchPulse 0.6s ease;
+        }
+
+        @keyframes matchPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        /* 配對成功動畫 */
+        .success-animation {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            z-index: 1000;
+            animation: successFade 2s ease-out forwards;
+        }
+
+        @keyframes successFade {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+            80% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        }
+
+        /* 結果畫面 */
+        .result-screen h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .score-display {
+            font-size: 3rem;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .result-message {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+
+        .restart-btn {
+            background: #FF8C00;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .restart-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* 計時器樣式 */
+        .timer {
+            color: #FFD700;
+        }
+
+        .timer.warning {
+            color: #FF4500;
+            animation: timerWarning 0.5s infinite alternate;
+        }
+
+        @keyframes timerWarning {
+            from { opacity: 1; }
+            to { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 開始畫面 -->
+        <div class="start-screen">
+            <h1>🎴 卡塔對對碰<br>碰出好手氣</h1>
+            <p>匹配來自世界各地的咖啡產地！</p>
+            <button class="start-btn" onclick="startGame()">開始遊戲</button>
+        </div>
+
+        <!-- 遊戲畫面 -->
+        <div class="game-screen">
+            <div class="game-info">
+                <div class="timer">時間: <span id="time">10</span>秒</div>
+            </div>
+            <div class="game-board" id="game-board"></div>
+        </div>
+
+        <!-- 結果畫面 -->
+        <div class="result-screen">
+            <h2>遊戲結束！</h2>
+            <div class="score-display">分數: <span id="final-score">0</span></div>
+            <div class="result-message" id="result-message"></div>
+            <button class="restart-btn" onclick="restartGame()">再玩一次</button>
+        </div>
+    </div>
+
+    <script>
+        let gameData = {};
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let score = 0;
+        let timeLeft = 10;
+        let timerInterval;
+        let isGamePaused = false;
+
+        // 載入遊戲資料
+        async function loadGameData() {
+            try {
+                const response = await fetch('./answer.json');
+                gameData = await response.json();
+                console.log('遊戲資料載入成功:', gameData);
+            } catch (error) {
+                console.error('載入遊戲資料失敗:', error);
+            }
+        }
+
+        // 初始化遊戲
+        async function initGame() {
+            await loadGameData();
+            createCards();
+            shuffleCards();
+            renderCards();
+        }
+
+        // 創建卡牌
+        function createCards() {
+            cards = [];
+            const regions = Object.keys(gameData);
+            const totalPairs = 10; // 10組配對 = 20張卡牌
+
+            // 隨機分配組合
+            for (let i = 0; i < totalPairs; i++) {
+                const randomRegion = regions[Math.floor(Math.random() * regions.length)];
+                cards.push({
+                    id: i * 2,
+                    region: randomRegion,
+                    image: gameData[randomRegion].pic,
+                    isFlipped: false,
+                    isMatched: false
+                });
+                cards.push({
+                    id: i * 2 + 1,
+                    region: randomRegion,
+                    image: gameData[randomRegion].pic,
+                    isFlipped: false,
+                    isMatched: false
+                });
+            }
+        }
+
+        // 洗牌
+        function shuffleCards() {
+            for (let i = cards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [cards[i], cards[j]] = [cards[j], cards[i]];
+            }
+        }
+
+        // 渲染卡牌
+        function renderCards() {
+            const gameBoard = document.getElementById('game-board');
+            gameBoard.innerHTML = '';
+
+            cards.forEach((card, index) => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'card';
+                cardElement.dataset.index = index;
+
+                if (card.isMatched) {
+                    cardElement.classList.add('matched');
+                }
+
+                if (card.isFlipped || card.isMatched) {
+                    cardElement.classList.add('flipped');
+                    cardElement.innerHTML = `<img src="${card.image}" alt="${card.region}">`;
+                } else {
+                    cardElement.innerHTML = `<img src="./pic/back.jpg" alt="卡片背面">`;
+                }
+
+                cardElement.addEventListener('click', () => handleCardClick(index));
+                gameBoard.appendChild(cardElement);
+            });
+        }
+
+        // 處理卡牌點擊
+        function handleCardClick(index) {
+            if (isGamePaused) return;
+
+            const card = cards[index];
+
+            // 防止點擊已翻開或已匹配的卡牌
+            if (card.isFlipped || card.isMatched) return;
+
+            // 防止同時翻開超過2張卡牌
+            if (flippedCards.length >= 2) return;
+
+            card.isFlipped = true;
+            flippedCards.push(card);
+            renderCards();
+
+            if (flippedCards.length === 2) {
+                setTimeout(checkMatch, 500);
+            }
+        }
+
+        // 檢查是否匹配
+        function checkMatch() {
+            const [card1, card2] = flippedCards;
+
+            if (card1.region === card2.region) {
+                // 匹配成功 - 立即結束遊戲
+                card1.isMatched = true;
+                card2.isMatched = true;
+                matchedPairs++;
+
+                // 顯示成功動畫並結束遊戲
+                showSuccessAnimation(card1.region);
+                setTimeout(() => {
+                    endGame(card1.region);
+                }, 2000);
+            } else {
+                // 匹配失敗
+                card1.isFlipped = false;
+                card2.isFlipped = false;
+            }
+
+            flippedCards = [];
+            renderCards();
+        }
+
+        // 顯示成功動畫
+        function showSuccessAnimation(region) {
+            isGamePaused = true;
+
+            const animation = document.createElement('div');
+            animation.className = 'success-animation';
+            animation.textContent = `${region} 配對成功！`;
+            document.body.appendChild(animation);
+
+            setTimeout(() => {
+                document.body.removeChild(animation);
+                isGamePaused = false;
+            }, 2000);
+        }
+
+        // 更新分數
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+        }
+
+        // 開始遊戲
+        function startGame() {
+            document.querySelector('.start-screen').style.display = 'none';
+            document.querySelector('.game-screen').style.display = 'block';
+
+            initGame();
+            startTimer();
+        }
+
+        // 開始計時器
+        function startTimer() {
+            const timerElement = document.getElementById('time');
+
+            timerInterval = setInterval(() => {
+                if (!isGamePaused) {
+                    timeLeft--;
+                    timerElement.textContent = timeLeft;
+
+                    if (timeLeft <= 3) {
+                        timerElement.parentElement.classList.add('warning');
+                    }
+
+                    if (timeLeft <= 0) {
+                        endGame();
+                    }
+                }
+            }, 1000);
+        }
+
+        // 結束遊戲
+        function endGame(wonRegion = null) {
+            clearInterval(timerInterval);
+
+            document.querySelector('.game-screen').style.display = 'none';
+            document.querySelector('.result-screen').style.display = 'block';
+
+            const resultTitle = document.querySelector('.result-screen h2');
+            const scoreDisplay = document.querySelector('.score-display');
+            const resultMessage = document.getElementById('result-message');
+
+            if (wonRegion) {
+                // 獲得獎項
+                resultTitle.textContent = '🎉 恭喜中獎！';
+                scoreDisplay.style.display = 'none';
+                resultMessage.innerHTML = `恭喜獲得<strong>${wonRegion}</strong>濾掛咖啡*1包`;
+                resultMessage.style.fontSize = '1.5rem';
+                resultMessage.style.fontWeight = 'bold';
+                resultMessage.style.color = '#FFD700';
+            } else {
+                // 時間結束，未中獎
+                resultTitle.textContent = '銘謝惠顧';
+                scoreDisplay.style.display = 'none';
+                resultMessage.innerHTML = `差一點就中啦～<br><br>別難過！至官網消費時輸入折扣碼，照樣享有 $20 折扣 🎁<br><br><strong style="font-size: 1.3rem; color: #FFD700;">折扣碼：COFFEE2025</strong>`;
+                resultMessage.style.fontSize = '1.2rem';
+                resultMessage.style.lineHeight = '1.6';
+            }
+        }
+
+        // 重新開始遊戲
+        function restartGame() {
+            document.querySelector('.result-screen').style.display = 'none';
+            document.querySelector('.start-screen').style.display = 'block';
+
+            // 重置遊戲狀態
+            cards = [];
+            flippedCards = [];
+            matchedPairs = 0;
+            score = 0;
+            timeLeft = 10;
+            isGamePaused = false;
+
+            document.getElementById('time').textContent = '10';
+            document.getElementById('time').parentElement.classList.remove('warning');
+
+            // 重置結果畫面顯示
+            const scoreDisplay = document.querySelector('.score-display');
+            const resultMessage = document.getElementById('result-message');
+            if (scoreDisplay) scoreDisplay.style.display = 'block';
+            if (resultMessage) {
+                resultMessage.style.fontSize = '';
+                resultMessage.style.fontWeight = '';
+                resultMessage.style.color = '';
+                resultMessage.style.lineHeight = '';
+            }
+        }
+
+        // 頁面載入時初始化
+        window.onload = initGame;
+    </script>
+</body>
+</html>
