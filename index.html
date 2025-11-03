@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #8B4513, #D2691E);
+            background: linear-gradient(135deg, #ebb187, #D2691E);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -87,7 +87,7 @@
 
         .card {
             aspect-ratio: 1;
-            background: #8B4513;
+            background: #f5bf99;
             border-radius: 10px;
             cursor: pointer;
             display: flex;
@@ -199,15 +199,15 @@
     <div class="container">
         <!-- 開始畫面 -->
         <div class="start-screen">
-            <h1>🎴 卡塔對對碰<br>碰出好手氣</h1>
-            <p>匹配來自世界各地的咖啡產地！</p>
+            <h1>卡塔摩納對對碰<br>碰出好手氣</h1>
+            <p>幸運加乘，香氣隨行～</p>
             <button class="start-btn" onclick="startGame()">開始遊戲</button>
         </div>
 
         <!-- 遊戲畫面 -->
         <div class="game-screen">
             <div class="game-info">
-                <div class="timer">時間: <span id="time">10</span>秒</div>
+                <div class="timer">時間: <span id="time">5</span>秒</div>
             </div>
             <div class="game-board" id="game-board"></div>
         </div>
@@ -217,7 +217,6 @@
             <h2>遊戲結束！</h2>
             <div class="score-display">分數: <span id="final-score">0</span></div>
             <div class="result-message" id="result-message"></div>
-            <button class="restart-btn" onclick="restartGame()">再玩一次</button>
         </div>
     </div>
 
@@ -227,7 +226,7 @@
         let flippedCards = [];
         let matchedPairs = 0;
         let score = 0;
-        let timeLeft = 10;
+        let timeLeft = 5;
         let timerInterval;
         let isGamePaused = false;
 
@@ -242,19 +241,28 @@
             }
         }
 
-        // 初始化遊戲
+        // 預載入圖片
+        function preloadImages(imageUrls) {
+            return Promise.all(imageUrls.map(url => {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => resolve(url);
+                    img.onerror = () => reject(url);
+                    img.src = url;
+                });
+            }));
+        }
+
+        // 初始化遊戲資料
         async function initGame() {
             await loadGameData();
-            createCards();
-            shuffleCards();
-            renderCards();
         }
 
         // 創建卡牌
         function createCards() {
             cards = [];
-            const regions = Object.keys(gameData);
-            const totalPairs = 10; // 10組配對 = 20張卡牌
+            const regions = Object.keys(gameData).filter(region => region !== 'JOKER'); // 排除JOKER
+            const totalPairs = 8; // 8組配對 = 16張正常卡牌
 
             // 隨機分配組合
             for (let i = 0; i < totalPairs; i++) {
@@ -264,14 +272,28 @@
                     region: randomRegion,
                     image: gameData[randomRegion].pic,
                     isFlipped: false,
-                    isMatched: false
+                    isMatched: false,
+                    isJoker: false
                 });
                 cards.push({
                     id: i * 2 + 1,
                     region: randomRegion,
                     image: gameData[randomRegion].pic,
                     isFlipped: false,
-                    isMatched: false
+                    isMatched: false,
+                    isJoker: false
+                });
+            }
+
+            // 添加4張JOKER卡片
+            for (let i = 0; i < 4; i++) {
+                cards.push({
+                    id: totalPairs * 2 + i,
+                    region: 'JOKER',
+                    image: gameData['JOKER'].pic,
+                    isFlipped: false,
+                    isMatched: false,
+                    isJoker: true
                 });
             }
         }
@@ -302,7 +324,7 @@
                     cardElement.classList.add('flipped');
                     cardElement.innerHTML = `<img src="${card.image}" alt="${card.region}">`;
                 } else {
-                    cardElement.innerHTML = `<img src="./pic/back.jpg" alt="卡片背面">`;
+                    cardElement.innerHTML = `<img src="./pic/back.png" alt="卡片背面">`;
                 }
 
                 cardElement.addEventListener('click', () => handleCardClick(index));
@@ -326,6 +348,21 @@
             flippedCards.push(card);
             renderCards();
 
+            // 檢查所有已翻開的牌中是否有 Joker
+            const hasJoker = flippedCards.some(card => card.isJoker);
+
+            if (hasJoker) {
+                // 如果有 Joker，立即處理（無論是第一張還是第二張）
+                isGamePaused = true; // 防止在蓋起期間翻其他卡片
+                setTimeout(() => {
+                    flippedCards.forEach(card => card.isFlipped = false);
+                    flippedCards = [];
+                    renderCards();
+                    isGamePaused = false; // 恢復遊戲
+                }, 500);
+                return;
+            }
+
             if (flippedCards.length === 2) {
                 setTimeout(checkMatch, 500);
             }
@@ -335,7 +372,19 @@
         function checkMatch() {
             const [card1, card2] = flippedCards;
 
-            if (card1.region === card2.region) {
+            // 如果任一張卡片是JOKER，配對不成功
+            if (card1.isJoker || card2.isJoker) {
+                // 匹配失敗 - 兩張一起蓋起
+                isGamePaused = true; // 防止在蓋起期間翻其他卡片
+                setTimeout(() => {
+                    card1.isFlipped = false;
+                    card2.isFlipped = false;
+                    flippedCards = [];
+                    renderCards();
+                    isGamePaused = false; // 恢復遊戲
+                }, 500);
+                return; // 提前返回，不執行後面的邏輯
+            } else if (card1.region === card2.region) {
                 // 匹配成功 - 立即結束遊戲
                 card1.isMatched = true;
                 card2.isMatched = true;
@@ -347,13 +396,17 @@
                     endGame(card1.region);
                 }, 2000);
             } else {
-                // 匹配失敗
-                card1.isFlipped = false;
-                card2.isFlipped = false;
+                // 匹配失敗 - 兩張一起蓋起
+                isGamePaused = true; // 防止在蓋起期間翻其他卡片
+                setTimeout(() => {
+                    card1.isFlipped = false;
+                    card2.isFlipped = false;
+                    flippedCards = [];
+                    renderCards();
+                    isGamePaused = false; // 恢復遊戲
+                }, 500);
+                return; // 提前返回，不執行後面的邏輯
             }
-
-            flippedCards = [];
-            renderCards();
         }
 
         // 顯示成功動畫
@@ -361,8 +414,9 @@
             isGamePaused = true;
 
             const animation = document.createElement('div');
+            animation.style.textAlign = 'center';
             animation.className = 'success-animation';
-            animation.textContent = `${region} 配對成功！`;
+            animation.innerHTML = `${region}<br>配對成功！`;
             document.body.appendChild(animation);
 
             setTimeout(() => {
@@ -377,11 +431,40 @@
         }
 
         // 開始遊戲
-        function startGame() {
+        async function startGame() {
+            // 顯示載入提示
+            const startBtn = document.querySelector('.start-btn');
+            startBtn.disabled = true;
+            startBtn.textContent = '載入中...';
+
+            // 先載入遊戲資料
+            await loadGameData();
+
+            // 收集所有需要的圖片URL
+            const imageUrls = [
+                './pic/back.png', // 卡片背面
+                ...Object.values(gameData).map(region => region.pic) // 所有咖啡產地圖片
+            ];
+
+            try {
+                // 預載入所有圖片
+                await preloadImages(imageUrls);
+                console.log('所有圖片載入完成');
+            } catch (error) {
+                console.error('圖片載入失敗:', error);
+                // 即使載入失敗也要繼續遊戲
+            }
+
+            // 隱藏開始畫面，顯示遊戲畫面
             document.querySelector('.start-screen').style.display = 'none';
             document.querySelector('.game-screen').style.display = 'block';
 
-            initGame();
+            // 初始化遊戲
+            createCards();
+            shuffleCards();
+            renderCards();
+
+            // 開始計時器
             startTimer();
         }
 
@@ -420,7 +503,7 @@
                 // 獲得獎項
                 resultTitle.textContent = '🎉 恭喜中獎！';
                 scoreDisplay.style.display = 'none';
-                resultMessage.innerHTML = `恭喜獲得<strong>${wonRegion}</strong>濾掛咖啡*1包`;
+                resultMessage.innerHTML = `恭喜獲得<strong>${wonRegion}</strong>濾掛咖啡 1 包`;
                 resultMessage.style.fontSize = '1.5rem';
                 resultMessage.style.fontWeight = 'bold';
                 resultMessage.style.color = '#FFD700';
@@ -428,39 +511,12 @@
                 // 時間結束，未中獎
                 resultTitle.textContent = '銘謝惠顧';
                 scoreDisplay.style.display = 'none';
-                resultMessage.innerHTML = `差一點就中啦～<br><br>別難過！至官網消費時輸入折扣碼，照樣享有 $20 折扣 🎁<br><br><strong style="font-size: 1.3rem; color: #FFD700;">折扣碼：COFFEE2025</strong>`;
+                resultMessage.innerHTML = `差一點就中啦～<br><br>別難過！至官網消費時輸入折扣碼，照樣享有 $25 折扣 🎁<br><br><strong style="font-size: 1.3rem; color: #FFD700;">折扣碼：COFFEE2025</strong>`;
                 resultMessage.style.fontSize = '1.2rem';
                 resultMessage.style.lineHeight = '1.6';
             }
         }
 
-        // 重新開始遊戲
-        function restartGame() {
-            document.querySelector('.result-screen').style.display = 'none';
-            document.querySelector('.start-screen').style.display = 'block';
-
-            // 重置遊戲狀態
-            cards = [];
-            flippedCards = [];
-            matchedPairs = 0;
-            score = 0;
-            timeLeft = 10;
-            isGamePaused = false;
-
-            document.getElementById('time').textContent = '10';
-            document.getElementById('time').parentElement.classList.remove('warning');
-
-            // 重置結果畫面顯示
-            const scoreDisplay = document.querySelector('.score-display');
-            const resultMessage = document.getElementById('result-message');
-            if (scoreDisplay) scoreDisplay.style.display = 'block';
-            if (resultMessage) {
-                resultMessage.style.fontSize = '';
-                resultMessage.style.fontWeight = '';
-                resultMessage.style.color = '';
-                resultMessage.style.lineHeight = '';
-            }
-        }
 
         // 頁面載入時初始化
         window.onload = initGame;

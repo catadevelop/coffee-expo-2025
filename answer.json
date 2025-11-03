@@ -10,6 +10,9 @@
     },
     "中美洲": {
         "pic" : "./pic/central_america.jpg"
+    },
+    "JOKER": {
+        "pic" : "./pic/joker.png"
     }
 }
     
