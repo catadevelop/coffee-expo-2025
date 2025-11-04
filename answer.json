@@ -12,7 +12,12 @@
         "pic" : "./pic/central_america.jpg"
     },
     "JOKER": {
-        "pic" : "./pic/joker.png"
+        "pic" : [
+            "./pic/joker-1.jpg",
+            "./pic/joker-2.jpg",
+            "./pic/joker-3.jpg",
+            "./pic/joker-4.jpg"
+        ]
     }
 }
     

@@ -13,12 +13,12 @@
 
         body {
             font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #ebb187, #D2691E);
+            background: linear-gradient(135deg, #ffdb6a, #fff7de);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
+            color: #8B4513;
         }
 
         .container {
@@ -123,6 +123,12 @@
             border-radius: 8px;
         }
 
+        .card .card-back {
+            width: 80%;
+            height: 80%;
+            margin: 10%;
+        }
+
         /* 配對成功動畫 */
         .success-animation {
             position: fixed;
@@ -179,9 +185,29 @@
             transform: scale(1.05);
         }
 
+        .official-website-btn {
+            background: #FF8C00;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            margin: 20px auto 0;
+            display: block;
+        }
+
+        .official-website-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
         /* 計時器樣式 */
         .timer {
             color: #FFD700;
+            display: none;
         }
 
         .timer.warning {
@@ -217,6 +243,7 @@
             <h2>遊戲結束！</h2>
             <div class="score-display">分數: <span id="final-score">0</span></div>
             <div class="result-message" id="result-message"></div>
+            <button class="official-website-btn" onclick="openOfficialWebsite()" style="display: none;">前往官網</button>
         </div>
     </div>
 
@@ -285,12 +312,17 @@
                 });
             }
 
-            // 添加4張JOKER卡片
+            // 添加4張JOKER卡片，每張使用不同的JOKER圖片
+            const jokerImages = [...gameData['JOKER'].pic]; // 複製圖片列表
             for (let i = 0; i < 4; i++) {
+                // 隨機選擇一張JOKER圖片
+                const randomIndex = Math.floor(Math.random() * jokerImages.length);
+                const selectedImage = jokerImages.splice(randomIndex, 1)[0]; // 移除已選中的圖片，避免重複
+
                 cards.push({
                     id: totalPairs * 2 + i,
                     region: 'JOKER',
-                    image: gameData['JOKER'].pic,
+                    image: selectedImage,
                     isFlipped: false,
                     isMatched: false,
                     isJoker: true
@@ -322,9 +354,9 @@
 
                 if (card.isFlipped || card.isMatched) {
                     cardElement.classList.add('flipped');
-                    cardElement.innerHTML = `<img src="${card.image}" alt="${card.region}">`;
+                    cardElement.innerHTML = `<img src="${card.image}" alt="${card.region}" class="card-front">`;
                 } else {
-                    cardElement.innerHTML = `<img src="./pic/back.png" alt="卡片背面">`;
+                    cardElement.innerHTML = `<img src="./pic/back.png" alt="卡片背面" class="card-back">`;
                 }
 
                 cardElement.addEventListener('click', () => handleCardClick(index));
@@ -443,7 +475,10 @@
             // 收集所有需要的圖片URL
             const imageUrls = [
                 './pic/back.png', // 卡片背面
-                ...Object.values(gameData).map(region => region.pic) // 所有咖啡產地圖片
+                ...Object.keys(gameData)
+                    .filter(region => region !== 'JOKER') // 排除JOKER
+                    .map(region => gameData[region].pic), // 所有咖啡產地圖片
+                ...gameData['JOKER'].pic // 所有JOKER圖片
             ];
 
             try {
@@ -499,6 +534,8 @@
             const scoreDisplay = document.querySelector('.score-display');
             const resultMessage = document.getElementById('result-message');
 
+            const officialWebsiteBtn = document.querySelector('.official-website-btn');
+
             if (wonRegion) {
                 // 獲得獎項
                 resultTitle.textContent = '🎉 恭喜中獎！';
@@ -506,17 +543,24 @@
                 resultMessage.innerHTML = `恭喜獲得<strong>${wonRegion}</strong>濾掛咖啡 1 包`;
                 resultMessage.style.fontSize = '1.5rem';
                 resultMessage.style.fontWeight = 'bold';
-                resultMessage.style.color = '#FFD700';
+                resultMessage.style.color = '#A0522D';
+                officialWebsiteBtn.style.display = 'none';
             } else {
                 // 時間結束，未中獎
                 resultTitle.textContent = '銘謝惠顧';
                 scoreDisplay.style.display = 'none';
-                resultMessage.innerHTML = `差一點就中啦～<br><br>別難過！至官網消費時輸入折扣碼，照樣享有 $25 折扣 🎁<br><br><strong style="font-size: 1.3rem; color: #FFD700;">折扣碼：COFFEE2025</strong>`;
+                resultMessage.innerHTML = `差一點就中啦～<br><br>別難過！至官網消費時輸入折扣碼，照樣享有 $25 折扣 🎁<br><br><strong style="font-size: 1.3rem; color: #A0522D;">折扣碼：COFFEE2025</strong>`;
                 resultMessage.style.fontSize = '1.2rem';
                 resultMessage.style.lineHeight = '1.6';
+                officialWebsiteBtn.style.display = 'block';
             }
         }
 
+
+        // 前往官網
+        function openOfficialWebsite() {
+            window.open('https://www.catamona1998.com/', '_blank');
+        }
 
         // 頁面載入時初始化
         window.onload = initGame;
