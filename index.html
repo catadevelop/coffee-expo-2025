@@ -19,6 +19,9 @@
             align-items: center;
             justify-content: center;
             color: #8B4513;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
         .container {
@@ -43,12 +46,22 @@
             margin-bottom: 20px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
             line-height: 1.3;
+            color: #ff751f;
         }
 
         .start-screen p {
             font-size: 1.2rem;
-            margin-bottom: 30px;
+            margin-bottom: 15px;
             opacity: 0.9;
+            color: #794300;
+        }
+
+        .start-screen .game-instruction {
+            font-size: 1rem;
+            margin-bottom: 30px;
+            color: #000000;
+            line-height: 1.4;
+            text-align: center;
         }
 
         .start-btn {
@@ -69,6 +82,14 @@
         }
 
         /* 遊戲畫面 */
+        .game-title {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #8B4513;
+            font-weight: bold;
+        }
+
         .game-info {
             display: flex;
             justify-content: space-between;
@@ -87,7 +108,7 @@
 
         .card {
             aspect-ratio: 1;
-            background: #f5bf99;
+            background: white;
             border-radius: 10px;
             cursor: pointer;
             display: flex;
@@ -100,7 +121,7 @@
         }
 
         .card.flipped {
-            background: #F5DEB3;
+            background: white;
             color: #8B4513;
         }
 
@@ -169,6 +190,56 @@
             margin-bottom: 30px;
         }
 
+        .prize-image {
+            width: 70%;
+            max-width: 300px;
+            height: auto;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .thank-you-image {
+            width: 80%;
+            max-width: 250px;
+            height: auto;
+            margin-bottom: 10px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .thank-you-subtitle {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            color: #555;
+        }
+        
+        .thank-you-maintext {
+            line-height: 1.5;
+            font-size: 1rem;
+        }
+        
+        .thank-you-reminder {
+            font-size: 0.8rem;
+            color: #777;
+        }
+        
+        .discount-details {
+            margin-top: 20px;
+            font-size: 0.85rem;
+            display: inline-block;
+            text-align: left;
+            color: #444;
+        }
+        
+        .discount-code {
+            display: block;
+            margin-top: 20px;
+            font-size: 1.4rem;
+            color: #000;
+            font-weight: bold;
+        }
+
         .restart-btn {
             background: #FF8C00;
             color: white;
@@ -226,12 +297,14 @@
         <!-- 開始畫面 -->
         <div class="start-screen">
             <h1>卡塔摩納對對碰<br>碰出好手氣</h1>
-            <p>幸運加乘，香氣隨行～</p>
-            <button class="start-btn" onclick="startGame()">開始遊戲</button>
+            <p style="margin-top: 50px;">幸運加成，香氣隨行～</p>
+            <p class="game-instruction" style="margin-top: 50px;">點擊【開始遊戲】，<br>在限時內翻出成對的濾掛咖啡卡片，<br>就能拿獎品！🌟</p>
+            <button style="margin-top: 20px;" class="start-btn" onclick="startGame()">開始遊戲</button>
         </div>
 
         <!-- 遊戲畫面 -->
         <div class="game-screen">
+            <h2 class="game-title">碰出好手氣</h2>
             <div class="game-info">
                 <div class="timer">時間: <span id="time">5</span>秒</div>
             </div>
@@ -240,6 +313,7 @@
 
         <!-- 結果畫面 -->
         <div class="result-screen">
+            <img id="thank-you-image" class="thank-you-image" style="display: none;" alt="銘謝惠顧">
             <h2>遊戲結束！</h2>
             <div class="score-display">分數: <span id="final-score">0</span></div>
             <div class="result-message" id="result-message"></div>
@@ -256,6 +330,13 @@
         let timeLeft = 5;
         let timerInterval;
         let isGamePaused = false;
+
+        // 設置背景
+        function setBackground(backgroundKey) {
+            if (gameData[backgroundKey] && gameData[backgroundKey].pic) {
+                document.body.style.backgroundImage = `url('${gameData[backgroundKey].pic}')`;
+            }
+        }
 
         // 載入遊戲資料
         async function loadGameData() {
@@ -283,12 +364,13 @@
         // 初始化遊戲資料
         async function initGame() {
             await loadGameData();
+            setBackground('背景-開始畫面');
         }
 
         // 創建卡牌
         function createCards() {
             cards = [];
-            const regions = Object.keys(gameData).filter(region => region !== 'JOKER'); // 排除JOKER
+            const regions = Object.keys(gameData).filter(region => region !== 'JOKER' && region !== '銘謝惠顧' && !region.startsWith('背景')); // 排除JOKER、銘謝惠顧和背景
             const totalPairs = 8; // 8組配對 = 16張正常卡牌
 
             // 隨機分配組合
@@ -476,9 +558,13 @@
             const imageUrls = [
                 './pic/back.png', // 卡片背面
                 ...Object.keys(gameData)
-                    .filter(region => region !== 'JOKER') // 排除JOKER
+                    .filter(region => region !== 'JOKER' && !region.startsWith('背景')) // 排除JOKER和背景
                     .map(region => gameData[region].pic), // 所有咖啡產地圖片
-                ...gameData['JOKER'].pic // 所有JOKER圖片
+                ...gameData['JOKER'].pic, // 所有JOKER圖片
+                gameData['背景'].pic, // 遊戲背景
+                gameData['背景-中獎'].pic, // 中獎背景
+                gameData['背景-開始畫面'].pic, // 開始畫面背景
+                gameData['銘謝惠顧'].pic // 銘謝惠顧圖片
             ];
 
             try {
@@ -493,6 +579,9 @@
             // 隱藏開始畫面，顯示遊戲畫面
             document.querySelector('.start-screen').style.display = 'none';
             document.querySelector('.game-screen').style.display = 'block';
+
+            // 設置遊戲背景
+            setBackground('背景');
 
             // 初始化遊戲
             createCards();
@@ -527,30 +616,61 @@
         function endGame(wonRegion = null) {
             clearInterval(timerInterval);
 
+            // 設置結果背景
+            if (wonRegion) {
+                setBackground('背景-中獎');
+            } else {
+                setBackground('背景');
+            }
+
             document.querySelector('.game-screen').style.display = 'none';
             document.querySelector('.result-screen').style.display = 'block';
 
             const resultTitle = document.querySelector('.result-screen h2');
             const scoreDisplay = document.querySelector('.score-display');
             const resultMessage = document.getElementById('result-message');
+            const thankYouImage = document.getElementById('thank-you-image');
 
             const officialWebsiteBtn = document.querySelector('.official-website-btn');
 
             if (wonRegion) {
+                thankYouImage.style.display = 'none';
+                resultTitle.style.display = 'block';
                 // 獲得獎項
                 resultTitle.textContent = '🎉 恭喜中獎！';
                 scoreDisplay.style.display = 'none';
-                resultMessage.innerHTML = `恭喜獲得<strong>${wonRegion}</strong>濾掛咖啡 1 包`;
+                const prizeImage = gameData[wonRegion] ? gameData[wonRegion].pic : '';
+                resultMessage.innerHTML = `
+                    恭喜獲得<strong>${wonRegion}</strong>濾掛咖啡 1 包<br>
+                    請出示此畫面向工作人員兌獎<br>
+                    <img src="${prizeImage}" alt="${wonRegion}咖啡" class="prize-image">
+                `;
                 resultMessage.style.fontSize = '1.5rem';
                 resultMessage.style.fontWeight = 'bold';
                 resultMessage.style.color = '#A0522D';
                 officialWebsiteBtn.style.display = 'none';
             } else {
                 // 時間結束，未中獎
-                resultTitle.textContent = '銘謝惠顧';
+                resultTitle.style.display = 'none';
+                if (gameData['銘謝惠顧'] && gameData['銘謝惠顧'].pic) {
+                    thankYouImage.src = gameData['銘謝惠顧'].pic;
+                    thankYouImage.style.display = 'block';
+                }
                 scoreDisplay.style.display = 'none';
-                resultMessage.innerHTML = `差一點就中啦～<br><br>別難過！至官網消費時輸入折扣碼，照樣享有 $25 折扣 🎁<br><br><strong style="font-size: 1.3rem; color: #A0522D;">折扣碼：COFFEE2025</strong>`;
-                resultMessage.style.fontSize = '1.2rem';
+                resultMessage.innerHTML = `
+                    <p class="thank-you-subtitle">差一點就中獎啦~</p>
+                    <p class="thank-you-maintext">別難過！<br>
+                    前往官網註冊／登入會員，<br>
+                    結帳時輸入折扣碼<br>
+                    <span class="thank-you-reminder">（記得先複製或截圖此畫面，以免忘記喔！）</span><br>
+                    即可享有 $25 折扣✨</p>
+                    <div class="discount-details">
+                        <p>使用條件｜ 消費滿 $500 折 $25</p>
+                        <p>使用期限｜ 即日起至 2025/12/31</p>
+                    </div>
+                    <strong class="discount-code">折扣碼：COFFEE2025</strong>
+                `;
+                resultMessage.style.fontSize = '1rem';
                 resultMessage.style.lineHeight = '1.6';
                 officialWebsiteBtn.style.display = 'block';
             }

@@ -1,15 +1,15 @@
 {
     "非洲": {
-        "pic" : "./pic/africa.jpg"
+        "pic" : "./pic/africa.png"
     },
     "南美洲": {
-        "pic" : "./pic/south_america.jpg"
+        "pic" : "./pic/south_america.png"
     },
     "亞洲": {
-        "pic" : "./pic/asia.jpg"
+        "pic" : "./pic/asia.png"
     },
     "中美洲": {
-        "pic" : "./pic/central_america.jpg"
+        "pic" : "./pic/central_america.png"
     },
     "JOKER": {
         "pic" : [
@@ -18,6 +18,17 @@
             "./pic/joker-3.jpg",
             "./pic/joker-4.jpg"
         ]
+    },
+    "背景": {
+        "pic" : "./pic/backgound_game.png"
+    },
+    "背景-中獎": {
+        "pic" : "./pic/backgound_bingo.png"
+    },
+    "背景-開始畫面": {
+        "pic" : "./pic/backgound_top.png"
+    },
+    "銘謝惠顧": {
+        "pic" : "./pic/thank_you.png"
     }
 }
-    
